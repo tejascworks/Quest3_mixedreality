@@ -1,0 +1,50 @@
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+
+public class MeasureTapeFeature : MonoBehaviour
+{
+    [Range(0.005f, 0.05f)]
+    [SerializeField]
+    private float tapeWidth = 0.01f; 
+
+    [SerializeField] private OVRInput.Button tapeActionButton;
+    [SerializeField] private Material tapeMaterial;
+    [SerializeField] private GameObject measurementInfoPrefab;
+    [SerializeField] private Vector3 measurementInfoControllerOffset = new Vector3(0, 0.045f, 0);
+
+    [SerializeField] private Transform leftControllerTapeArea;
+    [SerializeField] private Transform rightControllerTapeArea;
+
+    private List<MeasuringTape> savedTapeLines = new();
+    private TextMeshPro lastMeasurementInfo;
+    private LineRenderer lastTapeLineRenderer;
+
+    void Update()
+    {
+        HandleControllerActions(OVRInput.Controller.LTouch, leftControllerTapeArea);
+        HandleControllerActions(OVRInput.Controller.RTouch, rightControllerTapeArea);
+    }
+}
+private void CreateNewTapeLine(Vector3 initialPosition)
+{
+    var newTapeLine = new GameObject(name: $"TapeLine_{savedTapeLines.Count}",
+        params components: typeof(LineRenderer));
+
+    lastTapeLineRenderer = newTapeLine.GetComponent<LineRenderer>();
+    lastTapeLineRenderer.positionCount = 2;
+    lastTapeLineRenderer.startWidth = tapeWidth;
+    lastTapeLineRenderer.endWidth = tapeWidth;
+    lastTapeLineRenderer.material = tapeMaterial;
+    lastTapeLineRenderer.SetPosition(index: 0, initialPosition);
+
+    lastMeasurementInfo = Instantiate(measurementInfoPrefab, Vector3.zero, Quaternion.identity)
+        .GetComponent<TextMeshPro>();
+    lastMeasurementInfo.gameObject.SetActive(false);
+
+    savedTapeLines.Add(new MeasuringTape
+    {
+        TapeLine = newTapeLine,
+        TapeInfo = lastMeasurementInfo
+    });
+}
